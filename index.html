@@ -106,6 +106,16 @@
       margin-bottom: 0;
     }
     
+    .coefficient-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .coefficient-input {
+      flex: 1;
+    }
+    
     .meal-section {
       margin-top: 20px;
     }
@@ -204,6 +214,22 @@
       border: none;
       cursor: pointer;
     }
+    
+    .coefficient-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    
+    .coefficient-label span:first-child {
+      font-weight: 500;
+    }
+    
+    .coefficient-label span:last-child {
+      color: #6b7280;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -221,6 +247,23 @@
       <div class="input-group">
         <label for="weight">今日体重 (kg)</label>
         <input type="number" id="weight" min="0" step="0.1" placeholder="输入体重">
+      </div>
+      
+      <div class="coefficient-row">
+        <div class="coefficient-input">
+          <div class="coefficient-label">
+            <span>碳水系数</span>
+            <span>×体重</span>
+          </div>
+          <input type="number" id="carbCoeff" min="0" step="0.1" value="2.0">
+        </div>
+        <div class="coefficient-input">
+          <div class="coefficient-label">
+            <span>蛋白系数</span>
+            <span>×体重</span>
+          </div>
+          <input type="number" id="proteinCoeff" min="0" step="0.1" value="1.5">
+        </div>
       </div>
       
       <div class="target-box">
@@ -339,6 +382,8 @@
   <script>
     // 获取DOM元素
     const weightInput = document.getElementById('weight');
+    const carbCoeffInput = document.getElementById('carbCoeff');
+    const proteinCoeffInput = document.getElementById('proteinCoeff');
     const bfCarbInput = document.getElementById('bfCarb');
     const bfProteinInput = document.getElementById('bfProtein');
     const lunchCarbInput = document.getElementById('lunchCarb');
@@ -360,7 +405,7 @@
     const extraMealsContainer = document.getElementById('extraMealsContainer');
     
     let extraMeals = [];
-    let mealCounter = 1;
+    let mealCounter = 0;
     
     // 辅助函数
     function toNumber(value) {
@@ -383,10 +428,12 @@
     // 主要更新函数
     function update() {
       const weight = toNumber(weightInput.value);
+      const carbCoeff = toNumber(carbCoeffInput.value) || 2.0;
+      const proteinCoeff = toNumber(proteinCoeffInput.value) || 1.5;
       
       // 计算目标值
-      const targetCarb = weight * 2;
-      const targetProtein = weight * 1.5;
+      const targetCarb = weight * carbCoeff;
+      const targetProtein = weight * proteinCoeff;
       
       // 更新目标值显示
       targetCarbEl.textContent = weight > 0 ? format(targetCarb) : '-';
@@ -437,13 +484,14 @@
       
       const mealCard = document.createElement('div');
       mealCard.className = 'card';
+      mealCard.id = `extraMeal-${mealCounter}`;
       
       mealCard.innerHTML = `
         <div class="meal-header">
           <div class="section-title">
             <span>加餐 ${mealCounter}</span>
           </div>
-          <button class="remove-meal">删除</button>
+          <button class="remove-meal" data-meal-id="${mealCounter}">删除</button>
         </div>
         <div class="meal-row">
           <div class="meal-input">
@@ -464,7 +512,12 @@
       const removeBtn = mealCard.querySelector('.remove-meal');
       
       // 存储引用
-      const mealObj = { carbInput, proteinInput, mealCard };
+      const mealObj = { 
+        id: mealCounter,
+        carbInput, 
+        proteinInput, 
+        mealCard 
+      };
       extraMeals.push(mealObj);
       
       // 添加事件监听
@@ -472,18 +525,20 @@
       proteinInput.addEventListener('input', update);
       
       removeBtn.addEventListener('click', function() {
-        removeMeal(mealObj);
+        const mealId = parseInt(this.getAttribute('data-meal-id'));
+        removeMeal(mealId);
       });
       
       update();
     }
     
     // 删除加餐
-    function removeMeal(mealObj) {
-      const index = extraMeals.indexOf(mealObj);
+    function removeMeal(mealId) {
+      const index = extraMeals.findIndex(meal => meal.id === mealId);
       if (index > -1) {
+        const meal = extraMeals[index];
+        extraMealsContainer.removeChild(meal.mealCard);
         extraMeals.splice(index, 1);
-        extraMealsContainer.removeChild(mealObj.mealCard);
         update();
       }
     }
@@ -491,6 +546,8 @@
     // 重置所有数据
     function resetAll() {
       weightInput.value = '';
+      carbCoeffInput.value = '2.0';
+      proteinCoeffInput.value = '1.5';
       bfCarbInput.value = '0';
       bfProteinInput.value = '0';
       lunchCarbInput.value = '0';
@@ -505,7 +562,7 @@
         extraMealsContainer.removeChild(meal.mealCard);
       });
       extraMeals = [];
-      mealCounter = 1;
+      mealCounter = 0;
       
       update();
     }
@@ -517,6 +574,8 @@
     // 监听所有输入框的变化
     const allInputs = [
       weightInput,
+      carbCoeffInput,
+      proteinCoeffInput,
       bfCarbInput, bfProteinInput,
       lunchCarbInput, lunchProteinInput,
       dinnerCarbInput, dinnerProteinInput,
