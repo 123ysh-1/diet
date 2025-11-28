@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#4f46e5" />
-  <title>饮食计算器</title>
+  <title>好好干饭</title>
   <style>
     * {
       box-sizing: border-box;
@@ -235,8 +235,8 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>饮食计算器</h1>
-      <p>轻松管理每日蛋白质和碳水摄入</p>
+      <h1>好好干饭</h1>
+      <p>本网页由Justin爪斯汀设计完成</p>
     </div>
     
     <div class="card">
@@ -559,7 +559,9 @@
       
       // 删除所有动态加餐
       extraMeals.forEach(meal => {
-        extraMealsContainer.removeChild(meal.mealCard);
+        if (meal.mealCard.parentNode) {
+          extraMealsContainer.removeChild(meal.mealCard);
+        }
       });
       extraMeals = [];
       mealCounter = 0;
